@@ -1,5 +1,5 @@
 git init
-git remote add -link-
+git remote add origin -link-
 git pull origin main
 
 
