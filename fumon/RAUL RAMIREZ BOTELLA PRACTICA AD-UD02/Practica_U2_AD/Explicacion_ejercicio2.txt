@@ -1,0 +1,54 @@
+--------------Funcionamiento de Ejemplo-----------
+Caso 1:
+System.out.println("-- Configuración de la Estructura de Registros Personalizados --");
+     -Crea el archivo.txt (registro2.txt)en la misma ruta donde se está ejecutando el programa.
+	// Lógica de crear archivo. 
+    -Cuando se cree el archivo automáticamente tendrá 3 registros por defecto. Por ejemplo :
+	// Lógica de crear registros por defecto en el fichero(registro2.txt).
+	Codigo:"0001"Nombre: "Raul"Apellido:"Botella".
+	Codigo:"0002"Nombre: "Alvarito"Apellido:"Galvez".
+	Codigo:"0003"Nombre: "Javier"Apellido:"Roca".
+     -Preguntamos al usuario la estructura del registro. 
+	// Lógica de programa.
+  	 -Introduce los campos del registro : 2 (respuesta usuario)
+  	 -Introduce la longitud de caracteres de cada campo : // Preguntamos la longitud de los campos
+		Campo 1 : 5 (respuesta usuario)
+		Campo 2 : 10 (respuesta usuario)
+	- Introduce el nombre de los campos: // Preguntamos como se llamaran los campos
+		Campo 1 (Clave) : ID (respuesta usuario) // El primer campo sera clave.
+		Campo 2: Nombre (respuesta usuario)
+	System.out.println(" se ha creado correctamente la estructura del registro");
+
+System.out.println("-- Menú Principal 1 --");
+	  System.out.println("1. Mostrar Registro");
+	-Debera mostrar 3 registros por defecto, por ejemplo: //Mostramos todos los registros del fichero
+		Codigo:"0001"Nombre: "Raul"Apellido:"Botella".
+		Codigo:"0002"Nombre: "Alvarito"Apellido:"Galvez".
+		Codigo:"0003"Nombre: "Javier"Apellido:"Roca".
+                      System.out.println("2. Agregar Registro"); // Saldra la estructura definida por el usuario.
+	-Funcionamiento-
+	-Introduce el ID (5 caracteres como maximo):00001 (respuesta usuario) 
+	-Introduce el Nombre (10 caracteres como maximo):Juan (respuesta usuario)
+	Nota: Luego los registros añadidos se pondran ver en la opcion (Mostrar Registro).
+	  System.out.println(" se ha añadido correctamente el registro");
+                     System.out.println("3. Recuperar Registro");
+	-Primero mostramos los campos (clave): //Mostramos todos los campos clave del fichero
+	Codigo:0001
+	Codigo:0002
+	Codigo:0003
+	ID:00001
+	- Introduce el campo clave: 00001 (respuesta usuario) //Introduce el campo clave el usuario
+	- Mostramos el registro entero: 00001, Juan // Mostramos los registro encontrado con esa clave
+                     System.out.println("4. Modificar Registro");
+	-Primero mostramos los campos (clave): //Mostramos todos los campos clave del fichero
+	Codigo:0001
+	Codigo:0002
+	Codigo:0003
+	ID:00001
+	-Introduce la modificacion de ID: 00003 (respuesta usuario) 
+	-Introduce la modificacion de Nombre: Jose (respuesta usuario)
+	-Luego mostramos los registro ya modificados:
+	ID:00003
+	Nombre: Jose
+                    System.out.println("4. Volver al menú principal");
+--------------------------------------------------------------

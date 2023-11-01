@@ -49,9 +49,10 @@ public class Menu {
             System.out.println("│      2. Ejercicio2       │");
             System.out.println("│      3. Ejercicio3       │");
             System.out.println("│      4. Salir            │");
-            System.out.println("├──────────────────────────┤");
-            System.out.println("│     Elija una opción:    │");
             System.out.println("└──────────────────────────┘");
+            System.out.println("                            ");
+            System.out.print("Elija una opción:");
+
 
             // Leer la opción del usuario
             opcion = scanner.nextInt();
