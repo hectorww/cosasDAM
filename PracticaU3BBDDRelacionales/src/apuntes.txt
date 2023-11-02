@@ -1,0 +1,44 @@
+Apartado 3: controlar excepciones
+Apartado 3: Fecha actual con funciones
+Sacar obtenerconexion en una clase pa q sea global y no este en cada una
+
+
+//Apartado 3: Comprobar los trys
+//Apartado 3: que los DNI esten limitados a 9 como tipo string
+//Apartado 3: que los Nombres esten limitados a 32 como tipo string
+
+
+
+
+
+
+System.out.println("Introduce la fecha de inicio del proyecto (formato YYYY-MM-DD) o presiona enter para usar la fecha actual:");
+String fechaInicio = scanner.nextLine().trim();
+if (fechaInicio.isEmpty()) {
+fechaInicio = "now()";
+} else {
+fechaInicio = "'" + fechaInicio + "'";
+}
+
+System.out.println("Introduce la fecha de fin del proyecto (formato YYYY-MM-DD) o presiona enter si no está informada:");
+String fechaFin = scanner.nextLine().trim();
+if (fechaFin.isEmpty()) {
+fechaFin = "NULL";
+} else {
+fechaFin = "'" + fechaFin + "'";
+}
+
+String query = "INSERT INTO PROYECTOS(NOMBRE, DNI_NIF_JEFE_PROY, F_INICIO, F_FIN) VALUES (?, ?, " + fechaInicio + ", " + fechaFin + ")";
+try (PreparedStatement statement = connection.prepareStatement(query, PreparedStatement.RETURN_GENERATED_KEYS)) {
+statement.setString(1, nombreProyecto);
+statement.setString(2, dniJefe);
+statement.executeUpdate();
+
+ResultSet rs = statement.getGeneratedKeys();
+if (rs.next()) {
+return rs.getInt(1); // Devuelve el NUM_PROY
+}
+throw new SQLException("No se pudo obtener el ID del proyecto creado.");
+}
+}
+

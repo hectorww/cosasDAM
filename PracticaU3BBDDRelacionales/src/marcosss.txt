@@ -1,0 +1,366 @@
+import java.sql.*;
+import java.util.Scanner;
+
+public class Ejercicio4 {
+
+    private static Connection connection;
+    private static Scanner scanner = new Scanner(System.in);
+
+    public static void muestraErrorSQL(SQLException e) {
+        System.err.println("SQL ERROR mensaje: " + e.getMessage());
+        System.err.println("SQL Estado: " + e.getSQLState());
+        System.err.println("SQL código específico: " + e.getErrorCode());
+    }
+    private static void crearNuevoEmpleado() {
+        try {
+            System.out.println("Introduce el DNI del nuevo empleado:");
+            String dni = scanner.next();
+
+            while (!Empleado.esDniValido(dni) || Empleado.existeDni(dni, connection)) {
+                System.out.println("DNI no válido o ya existente. Introduce un DNI válido:");
+                dni = scanner.next();
+            }
+
+            System.out.println("Introduce el nombre del nuevo empleado:");
+            String nombre = scanner.next();
+
+            Empleado nuevoEmpleado = new Empleado();
+            nuevoEmpleado.setDniNif(dni);
+            nuevoEmpleado.setNombre(nombre);
+            nuevoEmpleado.save(connection);
+            System.out.println("Empleado creado correctamente.");
+        } catch (SQLException e) {
+            muestraErrorSQL(e);
+        }
+    }
+    public static void crearNuevoProyecto() throws SQLException {
+        Proyecto nuevoProyecto = new Proyecto();
+
+        System.out.println("Introduce el DNI del jefe del proyecto:");
+        String dniJefe = scanner.next();
+        scanner.nextLine();  // Agregado para consumir el carácter de nueva línea
+
+        while (!Proyecto.empleadoExiste(connection, dniJefe)) {
+            System.out.println("DNI no válido o no coincide con ningún empleado. Introduce nuevamente el DNI del jefe del proyecto:");
+            dniJefe = scanner.next();
+            scanner.nextLine();  // Agregado para consumir el carácter de nueva línea
+        }
+
+        nuevoProyecto.setDniJefe(dniJefe);
+
+        System.out.println("Introduce el nombre del proyecto:");
+        String nombreProyecto = scanner.nextLine();
+        nuevoProyecto.setNombreProyecto(nombreProyecto);
+
+        System.out.println("Introduce la fecha de inicio del proyecto (formato YYYY-MM-DD) o presiona enter para usar la fecha actual:");
+        String fechaInicio = scanner.nextLine().trim();
+        // Ajustar para manejar fechas adecuadamente
+
+        System.out.println("Introduce la fecha de fin del proyecto (formato YYYY-MM-DD) o presiona enter si no está informada:");
+        String fechaFin = scanner.nextLine().trim();
+        // Ajustar para manejar fechas adecuadamente
+
+        nuevoProyecto.save(connection);
+    }
+
+    public static void main(String[] args) {
+        String basedatos = "bdacc";
+        String host = "localhost";
+        String port = "3306";
+        String parAdic = "";
+        String urlConnection = "jdbc:mysql://" + host + ":" + port + "/" + basedatos + parAdic;
+        String user = "root";
+        String pwd = "user";
+
+        System.out.println("Elige una opción:");
+        System.out.println("1. Crear nuevo empleado");
+        System.out.println("2. Crear nuevo proyecto");
+        System.out.println("3. Asignar empleado a proyecto");
+        int opcion = scanner.nextInt();
+
+        try {
+            connection = DriverManager.getConnection(urlConnection, user, pwd);
+            System.out.println("Conexión realizada.");
+            Tablas.crearTablasSiNoExisten(connection);
+
+            switch (opcion) {
+                case 1:
+                    crearNuevoEmpleado();
+                    break;
+                case 2:
+                    crearNuevoProyecto();
+                    break;
+                case 3:
+                    AsignaEmProyecto.asignaEmpAProyecto(connection);
+                    break;
+                default:
+                    System.out.println("Opción no válida.");
+            }
+        } catch (SQLException e) {
+            muestraErrorSQL(e);
+        } catch (Exception e) {
+            e.printStackTrace(System.err);
+        }
+
+
+    }
+}
+
+
+
+
+
+
+
+import java.sql.*;
+
+public class Empleado {
+    private String dniNif;
+    private String nombre;
+
+    // Constructor sin parámetros
+    public Empleado() {}
+
+    // Constructor con DNI
+    public Empleado(String dniNif) throws SQLException {
+        this.dniNif = dniNif;
+        // Aquí podrías añadir lógica para cargar los detalles del empleado desde la BD
+        // Si el empleado no existe en la BD, podrías lanzar una excepción
+    }
+
+    // Getters y setters
+    public String getDniNif() {
+        return dniNif;
+    }
+
+    public void setDniNif(String dniNif) {
+        this.dniNif = dniNif;
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    // Método para validar el formato del DNI
+    public static boolean esDniValido(String dni) {
+        return dni.matches("\\d{8}[A-Z]");
+    }
+
+    // Método para verificar si el DNI ya existe en la base de datos
+    public static boolean existeDni(String dni, Connection conn) throws SQLException {
+        String query = "SELECT COUNT(*) FROM EMPLEADOS WHERE DNI_NIF = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, dni);
+            ResultSet resultSet = stmt.executeQuery();
+            if (resultSet.next()) {
+                return resultSet.getInt(1) > 0;
+            }
+        }
+        return false;
+    }
+
+
+    // Método para guardar o actualizar un empleado en la base de datos
+    public void save(Connection conn) throws SQLException {
+        // Verifica si el empleado ya existe
+        if (Empleado.existeDni(this.dniNif, conn)) {
+            // Actualizar empleado existente
+            String updateQuery = "UPDATE EMPLEADOS SET NOMBRE = ? WHERE DNI_NIF = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(updateQuery)) {
+                stmt.setString(1, this.nombre);
+                stmt.setString(2, this.dniNif);
+                stmt.executeUpdate();
+            }
+        } else {
+            // Insertar nuevo empleado
+            String insertQuery = "INSERT INTO EMPLEADOS (DNI_NIF, NOMBRE) VALUES (?, ?)";
+            try (PreparedStatement stmt = conn.prepareStatement(insertQuery)) {
+                stmt.setString(1, this.dniNif);
+                stmt.setString(2, this.nombre);
+                stmt.executeUpdate();
+            }
+        }
+    }
+}
+
+
+
+
+
+
+import java.sql.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+public class Proyecto {
+
+    private String nombre;
+    private String dniJefe;
+    private String fechaInicio;
+    private String fechaFin;
+
+    public Proyecto() {
+        this.nombre = "";
+        this.dniJefe = "";
+        this.fechaInicio = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+        this.fechaFin = "";
+    }
+
+    public Proyecto(String nombre, String dniJefe, String fechaInicio, String fechaFin) {
+        this.nombre = nombre;
+        this.dniJefe = dniJefe;
+        this.fechaInicio = fechaInicio;
+        this.fechaFin = fechaFin;
+    }
+
+    public String getNombreProyecto() {
+        return nombre;
+    }
+
+    public void setNombreProyecto(String nombre) {
+        this.nombre = nombre;
+    }
+
+    public String getDniJefe() {
+        return dniJefe;
+    }
+
+    public void setDniJefe(String dniJefe) {
+        this.dniJefe = dniJefe;
+    }
+
+    public String getFechaInicio() {
+        return fechaInicio;
+    }
+
+    public void setFechaInicio(String fechaInicio) {
+        this.fechaInicio = fechaInicio;
+    }
+
+    public String getFechaFin() {
+        return fechaFin;
+    }
+
+    public void setFechaFin(String fechaFin) {
+        this.fechaFin = fechaFin;
+    }
+
+    public void save(Connection connection) throws SQLException {
+        // Usamos un ternario para establecer la fecha actual si no se proporcionó una
+        String fechaInicioParaSQL = this.fechaInicio.isEmpty() ? new SimpleDateFormat("yyyy-MM-dd").format(new Date()) : this.fechaInicio;
+        String fechaFinParaSQL = this.fechaFin.isEmpty() ? "NULL" : "'" + this.fechaFin + "'";
+
+        String query = "INSERT INTO PROYECTOS(NOMBRE, DNI_NIF_JEFE_PROY, F_INICIO, F_FIN) VALUES (?, ?, ?, " + fechaFinParaSQL + ")";
+        try (PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, this.nombre);
+            statement.setString(2, this.dniJefe);
+            statement.setString(3, fechaInicioParaSQL);
+            statement.executeUpdate();
+        }
+    }
+    public static boolean empleadoExiste(Connection connection, String dni) throws SQLException {
+        String query = "SELECT COUNT(*) FROM EMPLEADOS WHERE DNI_NIF = ?";
+        try (PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, dni);
+            ResultSet rs = statement.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        }
+        return false;
+    }
+
+    // Puedes agregar más métodos si es necesario...
+}
+
+
+
+
+
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Scanner;
+import java.util.regex.Pattern;
+
+public class AsignaEmProyecto {
+
+    private static Scanner scanner = new Scanner(System.in);
+    private static final String DNI_PATTERN = "^[0-9]{8}[A-Za-z]$";
+
+    public static void asignaEmpAProyecto(Connection connection) throws SQLException {
+        System.out.println("Introduce el DNI del empleado:");
+        String dniEmp = scanner.next();
+
+        // Verificar formato del DNI
+        while (!isValidDNI(dniEmp)) {
+            System.out.println("El formato del DNI es incorrecto. Debe ser 8 números seguidos de una letra. Introduce nuevamente:");
+            dniEmp = scanner.next();
+        }
+
+        scanner.nextLine();  // Consume el carácter de nueva línea
+
+        System.out.println("Introduce el número de proyecto:");
+        int numProyecto = scanner.nextInt();
+        scanner.nextLine();
+
+        // Verificación: Si el empleado ya está asignado a ese proyecto
+        if (isEmpleadoAsignadoAProyecto(connection, dniEmp, numProyecto)) {
+            System.out.println("El empleado ya está asignado a este proyecto. No se puede asignar nuevamente.");
+            return;
+        }
+
+        System.out.println("Introduce la fecha de inicio de la asignación (formato YYYY-MM-DD) o presiona enter para usar la fecha actual:");
+        String fechaInicio = scanner.nextLine().trim();
+        if (fechaInicio.isEmpty()) {
+            fechaInicio = "now()";
+        } else {
+            fechaInicio = "'" + fechaInicio + "'";
+        }
+
+        System.out.println("Introduce la fecha de fin de la asignación (formato YYYY-MM-DD) o presiona enter si no está informada:");
+        String fechaFin = scanner.nextLine().trim();
+        if (fechaFin.isEmpty()) {
+            fechaFin = "NULL";
+        } else {
+            fechaFin = "'" + fechaFin + "'";
+        }
+
+        String query = "INSERT INTO ASIG_PROYECTOS(DNI_NIF_EMP, NUM_PROY, F_INICIO, F_FIN) VALUES (?, ?, " + fechaInicio + ", " + fechaFin + ")";
+        try (PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, dniEmp);
+            statement.setInt(2, numProyecto);
+            statement.executeUpdate();
+            System.out.println("Empleado asignado al proyecto correctamente.");
+        }
+    }
+
+    private static boolean isEmpleadoAsignadoAProyecto(Connection connection, String dniEmp, int numProyecto) throws SQLException {
+        String checkQuery = "SELECT COUNT(*) FROM ASIG_PROYECTOS WHERE DNI_NIF_EMP = ? AND NUM_PROY = ?";
+        try (PreparedStatement checkStatement = connection.prepareStatement(checkQuery)) {
+            checkStatement.setString(1, dniEmp);
+            checkStatement.setInt(2, numProyecto);
+            ResultSet rs = checkStatement.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isValidDNI(String dni) {
+        return Pattern.matches(DNI_PATTERN, dni);
+    }
+}
+
+
+
+
+
+
